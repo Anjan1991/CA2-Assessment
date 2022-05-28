@@ -84,65 +84,68 @@ pairs.panels(sleep_df_sorted,
 # Also looking at the histograms and the density plot
 # we can say that the data variables seems to not normally distributed
 
-include_list <- names(sleep_df_sorted) %in% c("Respiration_Rate",
+varibles_of_interest <- names(sleep_df_sorted) %in% c("Respiration_Rate",
                                               "Body_Temp",
                                               "Limb_Movement",
                                               "Blood_Oxy_Level",
-                                              "Sleeping_Hours",
-                                              "Heart_Rate")
+                                              "Heart_Rate",
+                                              "Sleeping_Hours")
 
-new_sleep_df <- sleep_df_sorted[(include_list)]
+new_sleep_df <- sleep_df_sorted[(varibles_of_interest)]
+
+# Rounding the variables to 2 places
+new_sleep_df <- round(new_sleep_df, digits = 2)
 
 # Showing pairs plot for the variables of interest
 pairs(new_sleep_df)
 
 opar <- par(no.readonly = TRUE)
-par(mfrow = c(4,2))
+par(mfrow = c(3,2))
 
 # Showing scatter plot for each of the data variables against heart rate
 scatter.smooth(x = new_sleep_df$Respiration_Rate,
-               y = new_sleep_df$Heart_Rate,
+               y = new_sleep_df$Blood_Oxy_Level,
                xlab = "Respiration Rate",
-               ylab = "Heart Rate", 
-               main = "Correlation of heart rate ~ respiration rate")
+               ylab = "Blood Oxygen Level", 
+               main = "Correlation of Blood Oxygen Level ~ respiration rate")
 
 scatter.smooth(x = new_sleep_df$Body_Temp,
-               y = new_sleep_df$Heart_Rate,
+               y = new_sleep_df$Blood_Oxy_Level,
                xlab = "Body Temperature",
-               ylab = "Heart Rate", 
-               main = "Correlation of heart rate ~ body temperature")
+               ylab = "Blood Oxygen Level", 
+               main = "Correlation of Blood Oxygen Level ~ body temperature")
 
 scatter.smooth(x = new_sleep_df$Limb_Movement,
-               y = new_sleep_df$Heart_Rate,
+               y = new_sleep_df$Blood_Oxy_Level,
                xlab = "Limb Movement",
-               ylab = "Heart Rate", 
-               main = "Correlation of heart rate ~ Limb movement")
-
-scatter.smooth(x = new_sleep_df$Blood_Oxy_Level,
-               y = new_sleep_df$Heart_Rate,
-               xlab = "Blood Oxygen Level",
-               ylab = "Heart Rate", 
-               main = "Correlation of heart rate ~ blood oxygen level")
+               ylab = "Blood Oxygen Level", 
+               main = "Correlation of Blood Oxygen Level ~ Limb movement")
 
 scatter.smooth(x = new_sleep_df$Sleeping_Hours,
-               y = new_sleep_df$Heart_Rate,
+               y = new_sleep_df$Blood_Oxy_Level,
                xlab = "Sleeping Hours",
-               ylab = "Heart Rate", 
-               main = "Correlation of heart rate ~ sleeping hours")
+               ylab = "Blood Oxygen Level", 
+               main = "Correlation of Blood Oxygen Level ~ sleeping hours")
+
+scatter.smooth(x = new_sleep_df$Heart_Rate,
+               y = new_sleep_df$Blood_Oxy_Level,
+               xlab = "Heart Rate",
+               ylab = "Blood Oxygen Level", 
+               main = "Correlation of blood oxygen level ~ heart rate")
 
 # Showing the correlation values for each of the 
 # data variables again the heart rate
 
-paste("Correlation for Body Temperature and Respiration rate: ", cor(new_sleep_df$Heart_Rate, new_sleep_df$Respiration_Rate))
-paste("Correlation for Heart Rate and Body Temperature: ", cor(new_sleep_df$Heart_Rate, new_sleep_df$Body_Temp))
-paste("Correlation for Heart Rate and Blood Oxygen Level: ", cor(new_sleep_df$Heart_Rate, new_sleep_df$Blood_Oxy_Level))
+paste("Correlation for Body Temperature and Respiration rate: ", cor(new_sleep_df$Blood_Oxy_Level, new_sleep_df$Respiration_Rate))
+paste("Correlation for Heart Rate and Body Temperature: ", cor(new_sleep_df$Blood_Oxy_Level, new_sleep_df$Body_Temp))
 paste("Correlation for Heart Rate and Limb Movement: ", cor(new_sleep_df$Heart_Rate, new_sleep_df$Limb_Movement))
-paste("Correlation for Heart Rate and Sleeping Hours: ", cor(new_sleep_df$Heart_Rate, new_sleep_df$Sleeping_Hours))
+paste("Correlation for Heart Rate and Blood Oxygen Level: ", cor(new_sleep_df$Blood_Oxy_Level, new_sleep_df$Heart_Rate))
+paste("Correlation for Heart Rate and Blood Oxygen Level: ", cor(new_sleep_df$Blood_Oxy_Level, new_sleep_df$Sleeping_Hours))
 
 # Finding outliers in the data variables
 attach(new_sleep_df)
 opar <- par(no.readonly = TRUE)
-par(mfrow = c(4,2))
+par(mfrow = c(3,2))
 boxplot(Heart_Rate,
         main = "Heart Rate",
         sub = paste("Outlier rows: ",
@@ -163,6 +166,7 @@ boxplot(Blood_Oxy_Level,
         main = "Blood Oxygen Level",
         sub = paste("Outlier rows: ",
                     boxplot.stats(Blood_Oxy_Level)$out)) # box plot for 'Blood Oxygen Level'
+
 boxplot(Sleeping_Hours,
         main = "Sleeping Hours",
         sub = paste("Outlier rows: ",
@@ -214,14 +218,6 @@ plot(density(new_sleep_df$Blood_Oxy_Level),
 
 polygon(density(new_sleep_df$Blood_Oxy_Level), col = "blue") #fills the area under the curve
 
-plot(density(new_sleep_df$Sleeping_Hours),
-     main = "Density Plot:Sleeping Hours",
-     xlab = "Sleeping Hours",
-     ylab = "Frequency",
-     sub = paste("Skewness:", round(e1071::skewness(new_sleep_df$Sleeping_Hours), 2)))
-
-polygon(density(new_sleep_df$Sleeping_Hours), col = "blue") #fills the area under the curve
-
 plot(density(new_sleep_df$Heart_Rate),
      main = "Density Plot:Heart Rate",
      xlab = "Heart Rate",
@@ -229,6 +225,14 @@ plot(density(new_sleep_df$Heart_Rate),
      sub = paste("Skewness:", round(e1071::skewness(new_sleep_df$Heart_Rate), 2)))
 
 polygon(density(new_sleep_df$Heart_Rate), col = "blue") #fills the area under the curve
+
+plot(density(new_sleep_df$Sleeping_Hours),
+     main = "Density Plot:Sleeping Hours",
+     xlab = "Sleeping Hours",
+     ylab = "Frequency",
+     sub = paste("Skewness:", round(e1071::skewness(new_sleep_df$Sleeping_Hours), 2)))
+
+polygon(density(new_sleep_df$Sleeping_Hours), col = "blue") #fills the area under the curve
 
 par <- opar
 
@@ -275,7 +279,7 @@ heart_rate_model <- lm(Blood_Oxy_Level ~
 
 summary(heart_rate_model)
 
-new_sleep_df <- subset(new_sleep_df, select = -c(Heart_Rate))
+new_sleep_df <- subset(new_sleep_df, select = -c(Heart_Rate, Respiration_Rate))
 set.seed(1)
 no_rows_data <- nrow(new_sleep_df)
 sample_data <- sample(1:no_rows_data,
@@ -286,10 +290,9 @@ training_data <- new_sleep_df[sample_data, ]
 test_data <- new_sleep_df[-sample_data, ]
 
 heart_rate_model <- lm(Blood_Oxy_Level ~
-                         Respiration_Rate +
                          Body_Temp +
                          Limb_Movement +
-                         Sleeping_Hours,   
+                         Sleeping_Hours,
                        data = training_data)
 
 summary(heart_rate_model)
@@ -351,4 +354,72 @@ library(gvlma)
 gvlma(heart_rate_model)
 summary(heart_rate_model)
 
+library(car)
+vif(heart_rate_model)
+sqrt(vif(heart_rate_model)) > 2
+summary(powerTransform(training_data$Blood_Oxy_Level))
+
+sqrt_transform_blood_oxy_level <- sqrt(training_data$Blood_Oxy_Level)
+training_data$blood_oxy_level_sqrt <- sqrt_transform_blood_oxy_level
+
+fit_model1 <- lm(Blood_Oxy_Level ~
+                   Body_Temp +
+                   Limb_Movement +
+                   Sleeping_Hours,
+                 data = training_data)
+
+fit_model2 <- lm(blood_oxy_level_sqrt ~
+                   Body_Temp +
+                   Limb_Movement +
+                   Sleeping_Hours,
+                 data = training_data)
+
+AIC(fit_model1, fit_model2)
+
+spreadLevelPlot(fit_model2)
+
+fit_model <- lm(Blood_Oxy_Level ~
+                  Body_Temp +
+                  Limb_Movement +
+                  Sleeping_Hours,
+                data = training_data)
+
+fit_model_sqrt <- lm(blood_oxy_level_sqrt ~
+                       Body_Temp +
+                       Limb_Movement +
+                       Sleeping_Hours,
+                     data = training_data)
+
+
+predicted_blood_oxy_level <- predict(fit_model, test_data)
+predicted_blood_oxy_level_sqrt <- predict(fit_model_sqrt, test_data)
+converted_blood_oxy_level_sqrt <- predicted_blood_oxy_level_sqrt ^ 2
+
+actual_predictions <- data.frame(cbind(actuals = test_data$Blood_Oxy_Level, predicted = predicted_blood_oxy_level))
+head(actual_predictions)
+
+actual_predictions_sqrt <- data.frame(cbind(actuals = test_data$Blood_Oxy_Level,
+                                             predicted = converted_blood_oxy_level_sqrt))
+head(actual_predictions_sqrt)
+
+correlation_accuracy <- cor(actual_predictions)
+correlation_accuracy
+
+correlation_accuracy <- cor(actual_predictions_sqrt)
+correlation_accuracy
+
+min_max_accuracy <- mean(apply(actual_predictions, 1, min) / apply(actual_predictions, 1, max))
+min_max_accuracy
+  
+min_max_accuracy <- mean(apply(actual_predictions_sqrt, 1, min) / apply(actual_predictions_sqrt, 1, max))
+min_max_accuracy  
+
+sigma(fit_model) / mean(test_data$Blood_Oxy_Level)  
+sigma(fit_model_sqrt) / mean(test_data$Blood_Oxy_Level)
+
+summary(new_sleep_df) 
+
+df <- data.frame(Respiration_Rate = c(18.54), Body_Temp = c(94.54), Limb_Movement = c(8.54), Sleeping_Hours = c(5.54))
+predicted_blood_oxy_level <- predict(fit_model, df)
+predicted_blood_oxy_level
 
