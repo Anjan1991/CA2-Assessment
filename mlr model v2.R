@@ -136,11 +136,11 @@ scatter.smooth(x = new_sleep_df$Heart_Rate,
 # Showing the correlation values for each of the 
 # data variables again the heart rate
 
-paste("Correlation for Body Temperature and Respiration rate: ", cor(new_sleep_df$Blood_Oxy_Level, new_sleep_df$Respiration_Rate))
-paste("Correlation for Heart Rate and Body Temperature: ", cor(new_sleep_df$Blood_Oxy_Level, new_sleep_df$Body_Temp))
-paste("Correlation for Heart Rate and Limb Movement: ", cor(new_sleep_df$Heart_Rate, new_sleep_df$Limb_Movement))
-paste("Correlation for Heart Rate and Blood Oxygen Level: ", cor(new_sleep_df$Blood_Oxy_Level, new_sleep_df$Heart_Rate))
-paste("Correlation for Heart Rate and Blood Oxygen Level: ", cor(new_sleep_df$Blood_Oxy_Level, new_sleep_df$Sleeping_Hours))
+paste("Correlation for Blood Oxygen Level and Respiration rate: ", cor(new_sleep_df$Blood_Oxy_Level, new_sleep_df$Respiration_Rate))
+paste("Correlation for Blood Oxygen Level and Body Temperature: ", cor(new_sleep_df$Blood_Oxy_Level, new_sleep_df$Body_Temp))
+paste("Correlation for Blood Oxygen Level and Limb Movement: ", cor(new_sleep_df$Heart_Rate, new_sleep_df$Limb_Movement))
+paste("Correlation for Blood Oxygen Level and Heart Rate: ", cor(new_sleep_df$Blood_Oxy_Level, new_sleep_df$Heart_Rate))
+paste("Correlation for Blood Oxygen Level and Sleeping Hours: ", cor(new_sleep_df$Blood_Oxy_Level, new_sleep_df$Sleeping_Hours))
 
 # Finding outliers in the data variables
 attach(new_sleep_df)
@@ -269,7 +269,7 @@ sample_data <- sample(1:no_rows_data,
 training_data <- new_sleep_df[sample_data, ]
 test_data <- new_sleep_df[-sample_data, ]
 
-heart_rate_model <- lm(Blood_Oxy_Level ~
+blood_oxy_level_model <- lm(Blood_Oxy_Level ~
                          Respiration_Rate +
                          Body_Temp +
                          Limb_Movement +
@@ -277,9 +277,81 @@ heart_rate_model <- lm(Blood_Oxy_Level ~
                          Sleeping_Hours,
                        data = training_data)
 
-summary(heart_rate_model)
+summary(blood_oxy_level_model)
 
 new_sleep_df <- subset(new_sleep_df, select = -c(Heart_Rate, Respiration_Rate))
+
+# Rebuilding the model
+set.seed(1)
+no_rows_data <- nrow(new_sleep_df)
+sample_data <- sample(1:no_rows_data,
+                      size = round(0.8 * no_rows_data),
+                      replace = FALSE)
+
+training_data <- new_sleep_df[sample_data, ]
+test_data <- new_sleep_df[-sample_data, ]
+
+blood_oxy_level_model <- lm(Blood_Oxy_Level ~
+                         Body_Temp +
+                         Limb_Movement +
+                         Sleeping_Hours,
+                       data = training_data)
+
+summary(heart_rate_model)
+
+# Determine the confidence interval
+confint(blood_oxy_level_model)
+
+opar <- par(no.readonly = TRUE)
+par(mfrow = c(1,2))
+
+# Finding the student residual values
+library(MASS)
+stud_resids <- studres(blood_oxy_level_model)
+head(stud_resids)
+
+# Plotting the student residuals
+library(car)
+qqPlot(blood_oxy_level_model, labels = row.names(new_sleep_df),
+       id.method = "Identity",
+       simulated = TRUE,
+       main = "Q-Q Plot")
+
+# Finding the oulier values
+training_data["534",]
+training_data["3",]
+training_data["88",]
+training_data["159",]
+
+# fitting model with outlier values to check the variation in prediction
+fitted(blood_oxy_level_model)["534"]
+fitted(blood_oxy_level_model)["3"]
+fitted(blood_oxy_level_model)["88"]
+fitted(blood_oxy_level_model)["159"]
+
+
+student_blood_oxy_level_model <- rstudent(blood_oxy_level_model)
+hist(student_blood_oxy_level_model, breaks = 10, freq = FALSE,
+     xlab = "Studentized residual", main = "Distribution of errors")
+
+curve(dnorm(x, mean = mean(student_blood_oxy_level_model),
+            sd = sd(student_blood_oxy_level_model)), add = TRUE,
+      col = "blue", lwd = 2)
+
+lines(density(student_blood_oxy_level_model)$x,
+      density(student_blood_oxy_level_model)$y,
+      col = "red",
+      lty = 2,
+      lwd = 2)
+
+legend("topright", legend = c("Normal curve", "Kernel density curve"),
+       lty = 1:2, col = c("blue", "red"), cex = .7)
+
+outlierTest(blood_oxy_level_model)
+
+new_sleep_df <- new_sleep_df[-c(534, 3, 88, 159), ]
+
+
 set.seed(1)
 no_rows_data <- nrow(new_sleep_df)
 sample_data <- sample(1:no_rows_data,
@@ -295,73 +367,48 @@ heart_rate_model <- lm(Blood_Oxy_Level ~
                          Sleeping_Hours,
                        data = training_data)
 
-summary(heart_rate_model)
-
-opar <- par(no.readonly = TRUE)
-par(mfrow = c(1,2))
+summary(blood_oxy_level_model)
 
 library(car)
-qqPlot(heart_rate_model, labels = row.names(new_sleep_df),
+qqPlot(blood_oxy_level_model, labels = row.names(new_sleep_df),
        id.method = "Identity",
        simulated = TRUE,
        main = "Q-Q Plot")
 
+# Component+Residual Plot
+crPlots(blood_oxy_level_model)
 
-training_data["534",]
-training_data["3",]
-training_data["88",]
-training_data["159",]
-
-fitted(heart_rate_model)["534"]
-fitted(heart_rate_model)["3"]
-fitted(heart_rate_model)["88"]
-fitted(heart_rate_model)["159"]
-
-student_heart_rate_model <- rstudent(heart_rate_model)
-hist(student_heart_rate_model, breaks = 10, freq = FALSE,
-     xlab = "Studentized residual", main = "Distribution of errors")
-
-curve(dnorm(x, mean = mean(student_heart_rate_model),
-            sd = sd(student_heart_rate_model)), add = TRUE,
-      col = "blue", lwd = 2)
-
-lines(density(student_heart_rate_model)$x,
-      density(student_heart_rate_model)$y,
-      col = "red",
-      lty = 2,
-      lwd = 2)
-
-legend("topright", legend = c("Normal curve", "Kernel density curve"),
-       lty = 1:2, col = c("blue", "red"), cex = .7)
-
-outlierTest(heart_rate_model)
-
-crPlots(heart_rate_model)
-
-cutoff <- 4/(nrow(training_data) - length(heart_rate_model$coefficients) - 2)
-plot(heart_rate_model, which = 4, cook.levels = cutoff)
+cutoff <- 4/(nrow(training_data) - length(blood_oxy_level_model$coefficients) - 2)
+plot(blood_oxy_level_model, which = 4, cook.levels = cutoff)
 abline(h = cutoff, lty = 2, col = "red")
 
-avPlots(heart_rate_model, ask=FALSE)
+avPlots(blood_oxy_level_model, ask=FALSE)
 
-influencePlot(heart_rate_model, main="Influence Plot",
+
+# Influence plot to check the influential observations
+influencePlot(blood_oxy_level_model, main="Influence Plot",
               sub="Circle size is proportional to Cook's distance")
-ncvTest(heart_rate_model)
-spreadLevelPlot(heart_rate_model)
+ncvTest(blood_oxy_level_model)
+spreadLevelPlot(blood_oxy_level_model)
 
+# Global model validation
 install.packages("gvlma")
 library(gvlma)
-gvlma(heart_rate_model)
-summary(heart_rate_model)
+gvlma(blood_oxy_level_model)
+summary(blood_oxy_level_model)
 
+# Finding the Variance inflation factor
 library(car)
-vif(heart_rate_model)
-sqrt(vif(heart_rate_model)) > 2
+vif(blood_oxy_level_model)
+sqrt(vif(blood_oxy_level_model)) > 2
 summary(powerTransform(training_data$Blood_Oxy_Level))
 
+
+# Pwer transforming the dependent variable
 sqrt_transform_blood_oxy_level <- sqrt(training_data$Blood_Oxy_Level)
 training_data$blood_oxy_level_sqrt <- sqrt_transform_blood_oxy_level
 
+# refitting the model
 fit_model1 <- lm(Blood_Oxy_Level ~
                    Body_Temp +
                    Limb_Movement +
@@ -374,7 +421,7 @@ fit_model2 <- lm(blood_oxy_level_sqrt ~
                    Sleeping_Hours,
                  data = training_data)
 
-AIC(fit_model1, fit_model2)
+AIC(fit_model1, fit_model2) # comparing the AIC score
 
 spreadLevelPlot(fit_model2)
 
@@ -422,4 +469,3 @@ summary(new_sleep_df)
 df <- data.frame(Respiration_Rate = c(18.54), Body_Temp = c(94.54), Limb_Movement = c(8.54), Sleeping_Hours = c(5.54))
 predicted_blood_oxy_level <- predict(fit_model, df)
 predicted_blood_oxy_level
-
